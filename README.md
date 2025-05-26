@@ -40,6 +40,18 @@ Files are backed up uncompressed by default, on the assumption a snapshotting or
 - `bz2`
 - `plain` (no compression - the default)
 
+## Timezone support
+
+You can now control the timezone used for scheduled backups by setting the `TZ` environment variable. For example:
+
+```yaml
+environment:
+  - TZ=Europe/Warsaw
+  - SCHEDULE=0 3 * * *
+```
+
+This ensures that the schedule is interpreted in the specified timezone. If `TZ` is not set, the system default timezone is used.
+
 ### Example `docker-compose.yml`
 
 ```yml

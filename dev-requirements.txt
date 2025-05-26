@@ -4,4 +4,5 @@ black==23.12.1
 ruff==0.11.8
 mypy==1.15.0
 types-requests
+types-pytz
 pytest==8.3.5

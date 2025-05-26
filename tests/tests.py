@@ -1,10 +1,12 @@
+from datetime import datetime
 from importlib.machinery import SourceFileLoader
 from importlib.util import module_from_spec, spec_from_loader
 from pathlib import Path
 from typing import Any, Callable
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
+import pytz
 
 BACKUP_DIR = Path.cwd() / "backups"
 
@@ -130,3 +132,9 @@ def test_get_backup_provider(container_name: str, name: str) -> None:
 
     assert provider is not None
     assert provider.name == name
+
+def test_get_localized_now():
+    dt = datetime(2025, 5, 27, 12, 0, 0)
+    localized = db_auto_backup.get_localized_now(dt, "Europe/Warsaw")
+    assert localized.tzinfo is not None
+    assert localized.tzinfo.zone == "Europe/Warsaw"

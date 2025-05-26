@@ -13,6 +13,7 @@ from typing import IO, Callable, Dict, Iterable, NamedTuple, Optional
 
 import docker
 import pycron
+import pytz
 import requests
 from docker.models.containers import Container
 from dotenv import dotenv_values
@@ -158,6 +159,7 @@ BACKUP_PROVIDERS: list[BackupProvider] = [
 
 BACKUP_DIR = Path(os.environ.get("BACKUP_DIR", "/var/backups"))
 SCHEDULE = os.environ.get("SCHEDULE", "0 0 * * *")
+TZ = os.environ.get("TZ")
 SHOW_PROGRESS = sys.stdout.isatty()
 COMPRESSION = os.environ.get("COMPRESSION", "plain")
 INCLUDE_LOGS = bool(os.environ.get("INCLUDE_LOGS"))
@@ -186,9 +188,23 @@ def get_container_names(container: Container) -> Iterable[str]:
     return names
 
 
+def get_localized_now(dt: datetime, tz_name: str) -> datetime:
+    tz = pytz.timezone(tz_name)
+    return dt.astimezone(tz)
+
+
 @pycron.cron(SCHEDULE)
 def backup(now: datetime) -> None:
     print("Starting backup...")
+
+    # Apply timezone if TZ is set
+    if TZ:
+        try:
+            tz = pytz.timezone(TZ)
+            now = now.astimezone(tz)
+        except Exception as e:
+            print(f"Invalid timezone '{TZ}': {e}")
+            sys.exit(1)
 
     docker_client = docker.from_env()
     containers = docker_client.containers.list()
@@ -253,7 +269,7 @@ def backup(now: datetime) -> None:
 
 if __name__ == "__main__":
     if os.environ.get("SCHEDULE"):
-        print(f"Running backup with schedule '{SCHEDULE}'.")
+        print(f"Running backup with schedule '{SCHEDULE}' (TZ={TZ}).")
         pycron.start()
     else:
         backup(datetime.now())
